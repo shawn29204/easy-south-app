@@ -11,9 +11,10 @@ module.exports = function override(config, env) {
     "os": require.resolve("os-browserify/browser"),
     "url": require.resolve("url"),
     "buffer": require.resolve("buffer"),
-    "assert": require.resolve("assert")
+    "assert": require.resolve("assert"),
+    "querystring": require.resolve("querystring-es3"), // <-- ADDED THIS LINE
   };
-  
+
   config.plugins = (config.plugins || []).concat([
     new webpack.ProvidePlugin({
       process: 'process/browser',
