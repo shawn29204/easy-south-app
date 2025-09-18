@@ -10,7 +10,7 @@ root.render(
     <App />
   </React.StrictMode>
 );
-const { VertexAI } = require('@google-cloud/aiplatform');
+
 
 // Initialize Vertex AI
 const vertex_ai = new VertexAI({ project: 'your-gcp-project-id', location: 'us-central1' });

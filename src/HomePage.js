@@ -1,17 +1,29 @@
 import React, { useState } from 'react';
 import AIChatInputForm from '../components/AIChatInputForm';
 import ResultsWithAdSkin from '../components/ResultsWithAdSkin';
+import { motion } from 'framer-motion';
 
-// --- API Keys and URLs ---
-const YOUR_GOOGLE_MAPS_API_KEY = 'AIzaSyAT9viWlFGWrx_BkOJjaPr9h-Ht7RUrrxY';
-const YOUR_VERTEX_AI_FUNCTION_URL = 'https://ai-concierge-backend-60068082618.us-east4.run.app ';
+// --- API Logic ---
+const YOUR_GOOGLE_MAPS_API_KEY = 'PASTE_YOUR_GOOGLE_MAPS_API_KEY_HERE';
+const YOUR_VERTEX_AI_FUNCTION_URL = 'PASTE_YOUR_CLOUD_FUNCTION_URL_HERE';
 
-// --- API Logic from before ---
 async function fetchGoogleMapsPlace(query) {
-  // ... (the Google Maps function we already have)
+  const placesApiUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${YOUR_GOOGLE_MAPS_API_KEY}`;
+  try {
+    const placesResponse = await fetch(placesApiUrl);
+    const placesData = await placesResponse.json();
+    if (placesData.status !== 'OK' || !placesData.results || placesData.results.length === 0) {
+      throw new Error('No places found for that query.');
+    }
+    const place = placesData.results[0];
+    const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=600x400&location=${place.geometry.location.lat},${place.geometry.location.lng}&key=${YOUR_GOOGLE_MAPS_API_KEY}`;
+    return { name: place.name, address: place.formatted_address, streetViewUrl };
+  } catch (error) {
+    console.error('Error fetching data from Google Maps:', error);
+    throw error;
+  }
 }
 
-// --- NEW: Function to call our Vertex AI backend ---
 async function fetchVertexAIResponse(prompt) {
   const response = await fetch(YOUR_VERTEX_AI_FUNCTION_URL, {
     method: 'POST',
@@ -22,31 +34,26 @@ async function fetchVertexAIResponse(prompt) {
     throw new Error('Failed to get response from AI.');
   }
   const data = await response.json();
-  return { text: data.response }; // Return a text response
+  return { text: data.response };
 }
-
 
 const HomePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [aiResults, setAiResults] = useState(null);
 
-  // --- UPDATED: The search handler is now smarter ---
   const handleSearch = async (query) => {
     setIsLoading(true);
     setError(null);
     setAiResults(null);
     
-    // Simple logic to decide which API to call
-    const isMapQuery = ['find', 'show me', 'where is', 'what is the address of'].some(keyword => query.toLowerCase().includes(keyword));
+    const isMapQuery = ['find', 'show me', 'where is', 'address of'].some(keyword => query.toLowerCase().includes(keyword));
 
     try {
       let result;
       if (isMapQuery) {
-        // It's a map question, call Google Maps
         result = await fetchGoogleMapsPlace(query);
       } else {
-        // It's a general question, call Vertex AI
         result = await fetchVertexAIResponse(query);
       }
       setAiResults(result);
@@ -73,10 +80,8 @@ const HomePage = () => {
       
       {aiResults && (
         <ResultsWithAdSkin>
-          {/* UPDATED: This now renders either a map result or a text result */}
           <div className="bg-white p-6 rounded-lg shadow-md animate-fade-in">
             {aiResults.streetViewUrl ? (
-              // Display Map Result
               <div>
                 <h3 className="text-2xl font-bold mb-2">{aiResults.name}</h3>
                 <p className="text-gray-700 mb-4">{aiResults.address}</p>
@@ -87,7 +92,6 @@ const HomePage = () => {
                 />
               </div>
             ) : (
-              // Display AI Text Result
               <div>
                 <h3 className="text-2xl font-bold mb-4">Concierge Response:</h3>
                 <p className="text-gray-700 whitespace-pre-wrap">{aiResults.text}</p>
