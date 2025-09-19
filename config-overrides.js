@@ -13,11 +13,13 @@ module.exports = function override(config, env) {
     "buffer": require.resolve("buffer"),
     "assert": require.resolve("assert"),
     "querystring": require.resolve("querystring-es3"),
+    "path": require.resolve("path-browserify"),
     "child_process": false,
     "fs": false,
-    "path": require.resolve("path-browserify"), // <-- ADD THIS LINE
+    "tls": false, // <-- ADD THIS LINE
+    "net": false, // <-- ADD THIS LINE
   };
-
+  
   config.plugins = (config.plugins || []).concat([
     new webpack.ProvidePlugin({
       process: 'process/browser',
