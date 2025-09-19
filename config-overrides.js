@@ -1,4 +1,5 @@
 // config-overrides.js
+// config-overrides.js
 const webpack = require('webpack');
 
 module.exports = function override(config, env) {
@@ -16,8 +17,8 @@ module.exports = function override(config, env) {
     "path": require.resolve("path-browserify"),
     "child_process": false,
     "fs": false,
-    "tls": false, // <-- ADD THIS LINE
-    "net": false, // <-- ADD THIS LINE
+    "tls": false,
+    "net": false, // <-- The final line
   };
   
   config.plugins = (config.plugins || []).concat([
