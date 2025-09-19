@@ -1,5 +1,4 @@
 // config-overrides.js
-// config-overrides.js
 const webpack = require('webpack');
 
 module.exports = function override(config, env) {
@@ -18,9 +17,10 @@ module.exports = function override(config, env) {
     "child_process": false,
     "fs": false,
     "tls": false,
-    "net": false, // <-- The final line
+    "net": false,
+    "events": require.resolve("events/"), // <-- ADD THIS LINE
   };
-  
+
   config.plugins = (config.plugins || []).concat([
     new webpack.ProvidePlugin({
       process: 'process/browser',
