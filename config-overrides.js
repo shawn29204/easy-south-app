@@ -12,9 +12,10 @@ module.exports = function override(config, env) {
     "url": require.resolve("url"),
     "buffer": require.resolve("buffer"),
     "assert": require.resolve("assert"),
-    "querystring": require.resolve("querystring-es3"), // <-- ADDED THIS LINE
+    "querystring": require.resolve("querystring-es3"),
+    "child_process": false, // <-- ADD THIS LINE
   };
-
+  
   config.plugins = (config.plugins || []).concat([
     new webpack.ProvidePlugin({
       process: 'process/browser',
