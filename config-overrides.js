@@ -18,9 +18,9 @@ module.exports = function override(config, env) {
     "fs": false,
     "tls": false,
     "net": false,
-    "events": require.resolve("events/"), // <-- ADD THIS LINE
+    "events": require.resolve("events/"),
   };
-
+  
   config.plugins = (config.plugins || []).concat([
     new webpack.ProvidePlugin({
       process: 'process/browser',
