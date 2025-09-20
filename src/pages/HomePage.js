@@ -2,56 +2,54 @@ import React, { useState } from 'react';
 import AIChatInputForm from '../components/AIChatInputForm';
 import ResultsWithAdSkin from '../components/ResultsWithAdSkin';
 
-// --- API Keys and URLs ---
-const YOUR_GOOGLE_MAPS_API_KEY = 'AIzaSyAT9viWlFGWrx_BkOJjaPr9h-Ht7RUrrxY';
-const YOUR_VERTEX_AI_FUNCTION_URL = 'https://ai-concierge-backend-60068082618.us-east4.run.app ';
+// --- PASTE YOUR KEYS AND URLS HERE ---
+const YOUR_GOOGLE_MAPS_API_KEY = 'AIzaSyCe76Eul17__EWDbS6rwo8gPGGvtSBedRQ';
+const YOUR_AI_FUNCTION_URL = 'https://ai-concierge-backend.vercel.app/api/askAI'; // Your live backend URL
 
-// --- API Logic from before ---
+// --- API Logic ---
 async function fetchGoogleMapsPlace(query) {
-  // ... (the Google Maps function we already have)
+  const placesApiUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${YOUR_GOOGLE_MAPS_API_KEY}`;
+  const response = await fetch(placesApiUrl);
+  if (!response.ok) throw new Error('Failed to fetch from Google Maps.');
+  const data = await response.json();
+  if (data.status !== 'OK' || !data.results || data.results.length === 0) {
+    throw new Error('No places found.');
+  }
+  const place = data.results[0];
+  const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=600x400&location=${place.geometry.location.lat},${place.geometry.location.lng}&key=${YOUR_GOOGLE_MAPS_API_KEY}`;
+  return { name: place.name, address: place.formatted_address, streetViewUrl };
 }
 
-// --- NEW: Function to call our Vertex AI backend ---
-async function fetchVertexAIResponse(prompt) {
-  const response = await fetch(YOUR_VERTEX_AI_FUNCTION_URL, {
+async function fetchAIResponse(prompt) {
+  const response = await fetch(YOUR_AI_FUNCTION_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: prompt }),
+    body: JSON.stringify({ prompt }),
   });
   if (!response.ok) {
     throw new Error('Failed to get response from AI.');
   }
   const data = await response.json();
-  return { text: data.response }; // Return a text response
+  return { text: data.response };
 }
-
 
 const HomePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [aiResults, setAiResults] = useState(null);
 
-  // --- UPDATED: The search handler is now smarter ---
   const handleSearch = async (query) => {
     setIsLoading(true);
     setError(null);
     setAiResults(null);
-    
-    // Simple logic to decide which API to call
-    const isMapQuery = ['find', 'show me', 'where is', 'what is the address of'].some(keyword => query.toLowerCase().includes(keyword));
+
+    const isMapQuery = ['find', 'show me', 'where is', 'address of'].some(keyword => query.toLowerCase().includes(keyword));
 
     try {
-      let result;
-      if (isMapQuery) {
-        // It's a map question, call Google Maps
-        result = await fetchGoogleMapsPlace(query);
-      } else {
-        // It's a general question, call Vertex AI
-        result = await fetchVertexAIResponse(query);
-      }
+      const result = isMapQuery ? await fetchGoogleMapsPlace(query) : await fetchAIResponse(query);
       setAiResults(result);
     } catch (err) {
-      setError('Sorry, I couldn\'t find an answer. Please try another question.');
+      setError(`Sorry, an error occurred: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -63,20 +61,18 @@ const HomePage = () => {
         <h1 className="text-4xl font-bold">Welcome to Easy South</h1>
         <p className="text-xl mt-4">Your trusted relocation concierge.</p>
       </div>
-      
+
       <div className="my-12">
         <AIChatInputForm onSubmit={handleSearch} isLoading={isLoading} />
       </div>
 
       {isLoading && <p className="text-center text-gray-600">Thinking...</p>}
       {error && <p className="text-center text-red-500">{error}</p>}
-      
+
       {aiResults && (
         <ResultsWithAdSkin>
-          {/* UPDATED: This now renders either a map result or a text result */}
-          <div className="bg-white p-6 rounded-lg shadow-md animate-fade-in">
+          <div className="bg-white p-6 rounded-lg shadow-md">
             {aiResults.streetViewUrl ? (
-              // Display Map Result
               <div>
                 <h3 className="text-2xl font-bold mb-2">{aiResults.name}</h3>
                 <p className="text-gray-700 mb-4">{aiResults.address}</p>
@@ -87,7 +83,6 @@ const HomePage = () => {
                 />
               </div>
             ) : (
-              // Display AI Text Result
               <div>
                 <h3 className="text-2xl font-bold mb-4">Concierge Response:</h3>
                 <p className="text-gray-700 whitespace-pre-wrap">{aiResults.text}</p>

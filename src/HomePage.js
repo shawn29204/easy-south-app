@@ -4,8 +4,8 @@ import ResultsWithAdSkin from '../components/ResultsWithAdSkin';
 import { motion } from 'framer-motion';
 
 // --- API Logic ---
-const YOUR_GOOGLE_MAPS_API_KEY = 'PASTE_YOUR_GOOGLE_MAPS_API_KEY_HERE';
-const YOUR_VERTEX_AI_FUNCTION_URL = 'PASTE_YOUR_CLOUD_FUNCTION_URL_HERE';
+const YOUR_GOOGLE_MAPS_API_KEY = 'AIzaSyCe76Eul17__EWDbS6rwo8gPGGvtSBedRQ';
+const YOUR_VERTEX_AI_FUNCTION_URL = 'https://ai-concierge-backend.vercel.app/';
 
 async function fetchGoogleMapsPlace(query) {
   const placesApiUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${YOUR_GOOGLE_MAPS_API_KEY}`;
