@@ -1,40 +1,26 @@
+// File: /src/pages/HomePage.js
 import React, { useState } from 'react';
 import AIChatInputForm from '../components/AIChatInputForm';
 import ResultsWithAdSkin from '../components/ResultsWithAdSkin';
-import { motion } from 'framer-motion';
 
-// --- API Logic ---
-const YOUR_GOOGLE_MAPS_API_KEY = 'AIzaSyCe76Eul17__EWDbS6rwo8gPGGvtSBedRQ';
-const YOUR_VERTEX_AI_FUNCTION_URL = 'https://ai-concierge-backend.vercel.app/';
+// The URL for your live backend function
+const YOUR_AI_FUNCTION_URL = 'https://ai-concierge-backend.vercel.app/api/askAI';
 
-async function fetchGoogleMapsPlace(query) {
-  const placesApiUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${YOUR_GOOGLE_MAPS_API_KEY}`;
-  try {
-    const placesResponse = await fetch(placesApiUrl);
-    const placesData = await placesResponse.json();
-    if (placesData.status !== 'OK' || !placesData.results || placesData.results.length === 0) {
-      throw new Error('No places found for that query.');
-    }
-    const place = placesData.results[0];
-    const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=600x400&location=${place.geometry.location.lat},${place.geometry.location.lng}&key=${YOUR_GOOGLE_MAPS_API_KEY}`;
-    return { name: place.name, address: place.formatted_address, streetViewUrl };
-  } catch (error) {
-    console.error('Error fetching data from Google Maps:', error);
-    throw error;
-  }
-}
+async function fetchFromApi(prompt) {
+  const isMapQuery = ['find', 'show me', 'where is', 'address of'].some(keyword => prompt.toLowerCase().includes(keyword));
 
-async function fetchVertexAIResponse(prompt) {
-  const response = await fetch(YOUR_VERTEX_AI_FUNCTION_URL, {
+  const response = await fetch(YOUR_AI_FUNCTION_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: prompt }),
+    body: JSON.stringify({ prompt, isMapQuery }),
   });
+
   if (!response.ok) {
-    throw new Error('Failed to get response from AI.');
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to get response from API.');
   }
-  const data = await response.json();
-  return { text: data.response };
+
+  return response.json();
 }
 
 const HomePage = () => {
@@ -47,18 +33,11 @@ const HomePage = () => {
     setError(null);
     setAiResults(null);
     
-    const isMapQuery = ['find', 'show me', 'where is', 'address of'].some(keyword => query.toLowerCase().includes(keyword));
-
     try {
-      let result;
-      if (isMapQuery) {
-        result = await fetchGoogleMapsPlace(query);
-      } else {
-        result = await fetchVertexAIResponse(query);
-      }
+      const result = await fetchFromApi(query);
       setAiResults(result);
     } catch (err) {
-      setError('Sorry, I couldn\'t find an answer. Please try another question.');
+      setError(`Sorry, an error occurred: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -80,8 +59,9 @@ const HomePage = () => {
       
       {aiResults && (
         <ResultsWithAdSkin>
-          <div className="bg-white p-6 rounded-lg shadow-md animate-fade-in">
+          <div className="bg-white p-6 rounded-lg shadow-md">
             {aiResults.streetViewUrl ? (
+              // Display Map Result
               <div>
                 <h3 className="text-2xl font-bold mb-2">{aiResults.name}</h3>
                 <p className="text-gray-700 mb-4">{aiResults.address}</p>
@@ -92,6 +72,7 @@ const HomePage = () => {
                 />
               </div>
             ) : (
+              // Display AI Text Result
               <div>
                 <h3 className="text-2xl font-bold mb-4">Concierge Response:</h3>
                 <p className="text-gray-700 whitespace-pre-wrap">{aiResults.text}</p>
